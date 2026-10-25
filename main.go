@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -10,7 +9,9 @@ import (
 func main() {
 	serCfg, apiCfg := getServerConfig(8080)
 
-	registerHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)
+	registerAppHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)
+	registerApiHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)
+	registerAdminHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)
 
 	log.Printf("Serving on port: %d\n", serCfg.Port)
 
@@ -20,25 +21,21 @@ func main() {
 	}
 }
 
-func registerHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
+func registerAppHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
+	prefix := "/app"
 	mux.Handle(
-		"/app/",
-		http.StripPrefix("/app/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))),
+		prefix+"/",
+		http.StripPrefix(prefix+"/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))),
 	)
-	mux.HandleFunc("GET /healthz", logRequestMiddlewareFunc(readinessHandler))
-	mux.HandleFunc("GET /metrics", logRequestMiddlewareFunc(apiCfg.metricHandler))
-	mux.HandleFunc("POST /reset", logRequestMiddlewareFunc(apiCfg.resetHandler))
 }
 
-func (apiCfg *apiConfig) metricHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Hits: %d\n", apiCfg.FileserverHits.Load())))
+func registerApiHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
+	prefix := "/api"
+	mux.HandleFunc("GET "+prefix+"/healthz", logRequestMiddlewareFunc(readinessHandler))
 }
 
-func (apiCfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	apiCfg.FileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Metrics reset: %d\n", apiCfg.FileserverHits.Load())))
+func registerAdminHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
+	prefix := "/admin"
+	mux.HandleFunc("GET "+prefix+"/metrics", logRequestMiddlewareFunc(apiCfg.metricHandler))
+	mux.HandleFunc("POST "+prefix+"/reset", logRequestMiddlewareFunc(apiCfg.resetHandler))
 }
