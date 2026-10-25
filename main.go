@@ -32,6 +32,7 @@ func registerAppHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 func registerApiHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 	prefix := "/api"
 	mux.HandleFunc("GET "+prefix+"/healthz", logRequestMiddlewareFunc(readinessHandler))
+	mux.HandleFunc("POST "+prefix+"/validate_chirp", logRequestMiddlewareFunc(chirpHandler))
 }
 
 func registerAdminHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
