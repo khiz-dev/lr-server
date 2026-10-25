@@ -25,7 +25,7 @@ func registerAppHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 	prefix := "/app"
 	mux.Handle(
 		prefix+"/",
-		http.StripPrefix(prefix+"/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))),
+		http.StripPrefix(prefix+"/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir("./app/")))),
 	)
 }
 
