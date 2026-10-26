@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/khiz-dev/goserve/internal/helper"
 )
 
 func (apiCfg *apiConfig) metricHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +39,7 @@ func chirpHandler(w http.ResponseWriter, r *http.Request) {
 		Error string `json:"error"`
 	}
 	type successResponse struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 	b := body{}
 	err := json.NewDecoder(r.Body).Decode(&b)
@@ -55,7 +57,7 @@ func chirpHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
-	resp := successResponse{Valid: true}
+	resp := successResponse{CleanedBody: helper.SanitizeChirp(b.Body)}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
