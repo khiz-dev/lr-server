@@ -42,3 +42,6 @@ goose_down:
 # Show migration status
 goose_status:
     goose -dir sql/schema postgres "{{POSTGRES_URL}}" status
+
+add_env:
+    export DB_URL="{{POSTGRES_URL}}"

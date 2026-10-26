@@ -4,9 +4,17 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
+	db, err := getDatabaseConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
 	serCfg, apiCfg := getServerConfig(8080)
 
 	registerAppHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)

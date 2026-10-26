@@ -1,8 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 	"sync/atomic"
 )
 
@@ -32,4 +34,14 @@ func getServerConfig(port int) (*cfg, *apiConfig) {
 	}
 
 	return cfg, &apiCfg
+}
+
+func getDatabaseConfig() (*sql.DB, error) {
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
