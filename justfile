@@ -43,5 +43,10 @@ goose_down:
 goose_status:
     goose -dir sql/schema postgres "{{POSTGRES_URL}}" status
 
-add_env:
-    export DB_URL="{{POSTGRES_URL}}"
+# Run the server with the local database configuration
+run:
+    DB_URL="{{POSTGRES_URL}}" ENV=dev go run .
+
+show_env:
+    echo "DB_URL={{POSTGRES_URL}}"
+    echo "ENV=dev"

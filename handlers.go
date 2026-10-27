@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/khiz-dev/goserve/internal/helper"
@@ -22,13 +21,6 @@ func (apiCfg *apiConfig) metricHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(renderedContent)
-}
-
-func (apiCfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	apiCfg.FileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Metrics reset: %d\n", apiCfg.FileserverHits.Load())))
 }
 
 func chirpHandler(w http.ResponseWriter, r *http.Request) {

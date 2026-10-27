@@ -4,18 +4,19 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	db, err := getDatabaseConfig()
-	if err != nil {
-		log.Fatal(err)
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Printf("Warning: could not load .env file: %v", err)
 	}
-	defer db.Close()
 
 	serCfg, apiCfg := getServerConfig(8080)
+	defer serCfg.db.Close()
 
 	registerAppHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)
 	registerApiHandlers(serCfg.Server.Handler.(*http.ServeMux), apiCfg)
@@ -41,10 +42,11 @@ func registerApiHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 	prefix := "/api"
 	mux.HandleFunc("GET "+prefix+"/healthz", logRequestMiddlewareFunc(readinessHandler))
 	mux.HandleFunc("POST "+prefix+"/validate_chirp", logRequestMiddlewareFunc(chirpHandler))
+	mux.HandleFunc("POST "+prefix+"/users", logRequestMiddlewareFunc(apiCfg.handleCreateUser))
 }
 
 func registerAdminHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 	prefix := "/admin"
 	mux.HandleFunc("GET "+prefix+"/metrics", logRequestMiddlewareFunc(apiCfg.metricHandler))
-	mux.HandleFunc("POST "+prefix+"/reset", logRequestMiddlewareFunc(apiCfg.resetHandler))
+	mux.HandleFunc("POST "+prefix+"/reset", logRequestMiddlewareFunc(apiCfg.handleUserReset))
 }
