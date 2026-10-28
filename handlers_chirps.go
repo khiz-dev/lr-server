@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -11,36 +13,34 @@ import (
 	"github.com/khiz-dev/goserve/internal/helper"
 )
 
+type Chirp struct {
+	ID        string `json:"id"`
+	Body      string `json:"body"`
+	UserID    string `json:"user_id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
 func (apiCfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type createChirpRequest struct {
 		Body   string `json:"body"`
 		UserID string `json:"user_id"`
 	}
-	type createChirpResponse struct {
-		ID        string `json:"id"`
-		Body      string `json:"body"`
-		UserID    string `json:"user_id"`
-		CreatedAt string `json:"created_at"`
-		UpdatedAt string `json:"updated_at"`
-	}
 
 	req := createChirpRequest{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		helper.ResponseBadRequest(w, "Invalid request payload")
 		return
 	}
 
 	err = validateChirp(req.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		helper.ResponseBadRequest(w, err.Error())
 		return
 	}
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		helper.ResponseBadRequest(w, "Invalid user ID")
 		return
 	}
@@ -49,11 +49,10 @@ func (apiCfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Reques
 		UserID: userID,
 	})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		helper.ResponseInternalServerError(w, err.Error())
 		return
 	}
-	resp := createChirpResponse{
+	resp := Chirp{
 		ID:        chrip.ID.String(),
 		Body:      chrip.Body,
 		UserID:    chrip.UserID.String(),
@@ -61,6 +60,53 @@ func (apiCfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Reques
 		UpdatedAt: chrip.UpdatedAt.String(),
 	}
 	helper.ResponseCreated(w, resp)
+}
+
+func (apiCfg *apiConfig) handleGetAllChrips(w http.ResponseWriter, r *http.Request) {
+	chrips, err := apiCfg.db.GetAllChrips(context.Background())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		helper.ResponseInternalServerError(w, err.Error())
+		return
+	}
+	resp := make([]Chirp, len(chrips))
+	for i, c := range chrips {
+		resp[i] = Chirp{
+			ID:        c.ID.String(),
+			Body:      c.Body,
+			UserID:    c.UserID.String(),
+			CreatedAt: c.CreatedAt.String(),
+			UpdatedAt: c.UpdatedAt.String(),
+		}
+	}
+	helper.ResponseOK(w, resp)
+}
+
+func (apiCfg *apiConfig) handleGetChirpByID(w http.ResponseWriter, r *http.Request) {
+	chirpID := r.PathValue("chirpID")
+	id, err := uuid.Parse(chirpID)
+	if err != nil {
+		helper.ResponseBadRequest(w, err.Error())
+		return
+	}
+
+	chrip, err := apiCfg.db.GetChirpByID(context.Background(), id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		helper.ResponseNotFound(w, "Chirp not found")
+		return
+	}
+	if err != nil {
+		helper.ResponseInternalServerError(w, err.Error())
+		return
+	}
+	resp := Chirp{
+		ID:        chrip.ID.String(),
+		Body:      chrip.Body,
+		UserID:    chrip.UserID.String(),
+		CreatedAt: chrip.CreatedAt.String(),
+		UpdatedAt: chrip.UpdatedAt.String(),
+	}
+	helper.ResponseOK(w, resp)
 }
 
 

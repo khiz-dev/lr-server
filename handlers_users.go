@@ -9,17 +9,17 @@ import (
 	"github.com/khiz-dev/goserve/internal/helper"
 )
 
+type User struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
 
 func (apiCfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request) {
     type createUserRequest struct {
         Email string `json:"email"`
-    }
-
-    type createUserResponse struct {
-        ID        string `json:"id"`
-        Email     string `json:"email"`
-        CreatedAt string `json:"created_at"`
-        UpdatedAt string `json:"updated_at"`
     }
 
     var req createUserRequest
@@ -47,7 +47,7 @@ func (apiCfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request
         return
     }
 
-    response := createUserResponse{
+    response := User{
         ID:        insertedUser.ID.String(),
         Email:     insertedUser.Email,
         CreatedAt: insertedUser.CreatedAt.String(),

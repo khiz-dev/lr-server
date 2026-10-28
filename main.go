@@ -38,6 +38,8 @@ func registerApiHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 	mux.HandleFunc("POST "+prefix+"/validate_chirp", logRequestMiddlewareFunc(chirpHandler))
 	mux.HandleFunc("POST "+prefix+"/users", logRequestMiddlewareFunc(apiCfg.handleCreateUser))
 	mux.HandleFunc("POST "+prefix+"/chirps", logRequestMiddlewareFunc(apiCfg.handleCreateChirp))
+	mux.HandleFunc("GET "+prefix+"/chirps", logRequestMiddlewareFunc(apiCfg.handleGetAllChrips))
+	mux.HandleFunc("GET "+prefix+"/chirps/{chirpID}", logRequestMiddlewareFunc(apiCfg.handleGetChirpByID))
 }
 
 func registerAdminHandlers(mux *http.ServeMux, apiCfg *apiConfig) {

@@ -24,6 +24,15 @@ func ResponseCreated(w http.ResponseWriter, payload any) {
 }
 
 
+func ResponseNotFound(w http.ResponseWriter, payload any) {
+	type notFoundResponse struct {
+		Error string `json:"error"`
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(notFoundResponse{Error: payload.(string)})
+}
+
 func ResponseBadRequest(w http.ResponseWriter, payload any) {
 	type badResponse struct {
 		Error string `json:"error"`
