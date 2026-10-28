@@ -94,6 +94,14 @@ func getEndpoints(apiCfg *apiConfig) Endpoints {
 				Handler: apiCfg.handleLogin,
 			},
 			{
+				Pattern: "POST /api/refresh",
+				Handler: apiCfg.handleRefreshToken,
+			},
+			{
+				Pattern: "POST /api/revoke",
+				Handler: apiCfg.handleRevokeRefreshToken,
+			},
+			{
 				Pattern: "POST /api/validate_chirp",
 				Handler: chirpHandler,
 			},

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -88,9 +89,73 @@ func (apiCfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (apiCfg *apiConfig) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
-	refreshToken := r.Header.Get(auth.AuthHeader)
+	refreshToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		helper.ResponseBadRequest(w, "Refresh token is required")
+		return
+	}
 	if refreshToken == "" {
 		helper.ResponseBadRequest(w, "Refresh token is required")
 		return
 	}
+
+	storedToken, err := apiCfg.db.GetRefreshTokenByToken(r.Context(), refreshToken)
+	if err != nil {
+		fmt.Println(err)
+		helper.ResponseUnauthorized(w, "Invalid refresh token")
+		return
+	}
+
+	if storedToken.ExpiresAt.Before(time.Now()) || storedToken.RevokedAt.Valid {
+		helper.ResponseUnauthorized(w, "Refresh token has expired")
+		return
+	}
+
+	// Generate a new JWT token
+	defaultDuration := time.Duration(AccessTokenDefaultExpiresInSeconds) * time.Second
+	jwtToken, err := auth.MakeJWT(storedToken.UserID, apiCfg.secret, defaultDuration)
+	if err != nil {
+		helper.ResponseInternalServerError(w, "Failed to generate JWT")
+		return
+	}
+
+	type refreshTokenResponse struct {
+		Token                        string `json:"token"`
+		ExpiresInSeconds             int    `json:"expires_in_seconds"`
+		RefreshToken                 string `json:"refresh_token"`
+		RefreshTokenExpiresInSeconds int    `json:"refresh_token_expires_in_seconds"`
+	}
+
+	helper.ResponseOK(w, refreshTokenResponse{
+		Token:                        jwtToken,
+		ExpiresInSeconds:             AccessTokenDefaultExpiresInSeconds,
+		RefreshToken:                 refreshToken,
+		RefreshTokenExpiresInSeconds: RefreshTokenDefaultExpiresInSeconds,
+	})
+}
+
+func (apiCfg *apiConfig) handleRevokeRefreshToken(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		helper.ResponseBadRequest(w, "Refresh token is required")
+		return
+	}
+	if refreshToken == "" {
+		helper.ResponseBadRequest(w, "Refresh token is required")
+		return
+	}
+
+	storedToken, err := apiCfg.db.GetRefreshTokenByToken(r.Context(), refreshToken)
+	if err != nil {
+		fmt.Println(err)
+		helper.ResponseInternalServerError(w, "Failed to revoke refresh token")
+		return
+	}
+	err = apiCfg.db.RevokeRefreshToken(r.Context(), storedToken.Token)
+	if err != nil {
+		helper.ResponseInternalServerError(w, "Failed to revoke refresh token")
+		return
+	}
+
+	helper.ResponseNoContent(w)
 }

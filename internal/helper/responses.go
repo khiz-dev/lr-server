@@ -14,6 +14,11 @@ func ResponseOK(w http.ResponseWriter, payload any) {
 	}
 }
 
+func ResponseNoContent(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func ResponseCreated(w http.ResponseWriter, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
