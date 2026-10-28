@@ -94,3 +94,54 @@ func (apiCfg *apiConfig) handleUserReset(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 	helper.ResponseOK(w, "Users reset successfully")
 }
+
+func (apiCfg *apiConfig) handleUserUpdate(w http.ResponseWriter, r *http.Request) {
+	type updateUserRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req updateUserRequest
+
+	userID, err := auth.GetUserIDFromContext(r.Context())
+	if err != nil {
+		helper.ResponseUnauthorized(w, "User is not authenticated")
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		helper.ResponseBadRequest(w, "Invalid request payload")
+		return
+	}
+
+	if req.Email == "" {
+		helper.ResponseBadRequest(w, "Empty email cannot be updated")
+		return
+	}
+
+	if req.Password == "" {
+		helper.ResponseBadRequest(w, "Empty password cannot be updated")
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		helper.ResponseInternalServerError(w, "Failed to hash password")
+		return
+	}
+	updatedUser, err := apiCfg.db.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:             userID,
+		Email:          req.Email,
+		HashedPassword: sql.NullString{String: hashedPassword, Valid: true},
+	})
+	if err != nil {
+		helper.ResponseInternalServerError(w, "Failed to update user")
+		return
+	}
+
+	helper.ResponseOK(w, User{
+		ID:        updatedUser.ID.String(),
+		Email:     updatedUser.Email,
+		CreatedAt: updatedUser.CreatedAt.String(),
+		UpdatedAt: updatedUser.UpdatedAt.String(),
+	})
+}

@@ -86,6 +86,10 @@ func getEndpoints(apiCfg *apiConfig) Endpoints {
 				Pattern: "POST /api/chirps",
 				Handler: apiCfg.handleCreateChirp,
 			},
+			{
+				Pattern: "PUT /api/users",
+				Handler: apiCfg.handleUserUpdate,
+			},
 		},
 
 		Public: []Endpoint{
