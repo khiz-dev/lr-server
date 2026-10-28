@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -34,12 +35,26 @@ func registerAppHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 
 func registerApiHandlers(mux *http.ServeMux, apiCfg *apiConfig) {
 	prefix := "/api"
-	mux.HandleFunc("GET "+prefix+"/healthz", logRequestMiddlewareFunc(readinessHandler))
-	mux.HandleFunc("POST "+prefix+"/validate_chirp", logRequestMiddlewareFunc(chirpHandler))
-	mux.HandleFunc("POST "+prefix+"/users", logRequestMiddlewareFunc(apiCfg.handleCreateUser))
-	mux.HandleFunc("POST "+prefix+"/chirps", logRequestMiddlewareFunc(apiCfg.handleCreateChirp))
-	mux.HandleFunc("GET "+prefix+"/chirps", logRequestMiddlewareFunc(apiCfg.handleGetAllChrips))
-	mux.HandleFunc("GET "+prefix+"/chirps/{chirpID}", logRequestMiddlewareFunc(apiCfg.handleGetChirpByID))
+	endpoints := getEndpoints(apiCfg)
+	for _, endpoint := range endpoints {
+		for pattern, handler := range endpoint {
+			mux.HandleFunc(fmt.Sprintf(pattern, prefix), logRequestMiddlewareFunc(handler))
+		}
+	}
+}
+
+func getEndpoints(apiCfg *apiConfig) []map[string]http.HandlerFunc {
+	return []map[string]http.HandlerFunc{
+		{
+			"GET %s/healthz": readinessHandler,
+			"POST %s/users":  apiCfg.handleCreateUser,
+			"POST %s/login":  apiCfg.handleLogin,
+			"POST %s/validate_chirp": chirpHandler,
+			"POST %s/chirps": apiCfg.handleCreateChirp,
+			"GET %s/chirps": apiCfg.handleGetAllChrips,
+			"GET %s/chirps/{chirpID}": apiCfg.handleGetChirpByID,
+		},
+	}
 }
 
 func registerAdminHandlers(mux *http.ServeMux, apiCfg *apiConfig) {

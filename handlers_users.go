@@ -1,11 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 
+	"github.com/khiz-dev/goserve/internal/auth"
+	"github.com/khiz-dev/goserve/internal/database"
 	"github.com/khiz-dev/goserve/internal/helper"
 )
 
@@ -20,6 +23,7 @@ type User struct {
 func (apiCfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request) {
     type createUserRequest struct {
         Email string `json:"email"`
+		Password string `json:"password"`
     }
 
     var req createUserRequest
@@ -38,7 +42,23 @@ func (apiCfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request
         return
     }
 
-    insertedUser, err := apiCfg.db.CreateUser(r.Context(), req.Email)
+    if req.Password == "" {
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusBadRequest)
+        helper.ResponseBadRequest(w, "Password is required")
+        return
+    }
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		helper.ResponseInternalServerError(w, "Failed to hash password")
+		return
+	}
+    insertedUser, err := apiCfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email: req.Email,
+		HashedPassword: sql.NullString{String: hashedPassword, Valid: true},
+	})
     if err != nil {
         fmt.Println("Failed to create user:", err)
         w.Header().Set("Content-Type", "application/json")
@@ -47,14 +67,12 @@ func (apiCfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request
         return
     }
 
-    response := User{
+    helper.ResponseCreated(w, User{
         ID:        insertedUser.ID.String(),
         Email:     insertedUser.Email,
         CreatedAt: insertedUser.CreatedAt.String(),
         UpdatedAt: insertedUser.UpdatedAt.String(),
-    }
-
-    helper.ResponseCreated(w, response)
+    })
 }
 
 

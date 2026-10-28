@@ -33,6 +33,15 @@ func ResponseNotFound(w http.ResponseWriter, payload any) {
 	json.NewEncoder(w).Encode(notFoundResponse{Error: payload.(string)})
 }
 
+func ResponseUnauthorized(w http.ResponseWriter, payload any) {
+	type unauthorizedResponse struct {
+		Error string `json:"error"`
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(unauthorizedResponse{Error: payload.(string)})
+}
+
 func ResponseBadRequest(w http.ResponseWriter, payload any) {
 	type badResponse struct {
 		Error string `json:"error"`
