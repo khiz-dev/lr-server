@@ -1,5 +1,6 @@
 package main
 
 const (
-	DefaultExpiresInSeconds = 3600 // 1 hour
+	AccessTokenDefaultExpiresInSeconds  = 3600   // 1 hour
+	RefreshTokenDefaultExpiresInSeconds = 604800 // 7 days
 )

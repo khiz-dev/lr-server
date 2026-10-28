@@ -19,6 +19,16 @@ type Chrip struct {
 	UserID    uuid.UUID
 }
 
+type RefreshToken struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Token     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	ExpiresAt time.Time
+	RevokedAt sql.NullTime
+}
+
 type User struct {
 	ID             uuid.UUID
 	CreatedAt      time.Time

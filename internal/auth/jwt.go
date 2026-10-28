@@ -16,7 +16,7 @@ type TokenType string
 const (
 	// TokenTypeAccess -
 	TokenTypeAccess TokenType = "chirpy-access"
-	AuthHeader = "Authorization"
+	AuthHeader                = "Authorization"
 )
 
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
@@ -35,6 +35,9 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	parsedToken, err := jwt.ParseWithClaims(tokenString, &claimsStruct, func(token *jwt.Token) (interface{}, error) {
 		return []byte(tokenSecret), nil
 	})
+	if err != nil {
+		return uuid.Nil, err
+	}
 	userIDString, err := parsedToken.Claims.GetSubject()
 	if err != nil {
 		return uuid.Nil, err
@@ -74,4 +77,3 @@ func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	}
 	return uuid.Parse(userIDString)
 }
-
