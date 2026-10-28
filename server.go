@@ -24,6 +24,7 @@ type cfg struct {
 type apiConfig struct {
 	FileserverHits atomic.Int32
 	db             *database.Queries
+	secret         string
 }
 
 func getServerConfig(port int) (*cfg, *apiConfig) {
@@ -32,6 +33,7 @@ func getServerConfig(port int) (*cfg, *apiConfig) {
 	apiCfg := apiConfig{
 		FileserverHits: atomic.Int32{},
 		db: nil,
+		secret: os.Getenv("SECRET"),
 	}
 
 	cfg := &cfg{

@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/khiz-dev/goserve/internal/auth"
 	"github.com/khiz-dev/goserve/internal/database"
 	"github.com/khiz-dev/goserve/internal/helper"
 )
@@ -24,7 +25,6 @@ type Chirp struct {
 func (apiCfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type createChirpRequest struct {
 		Body   string `json:"body"`
-		UserID string `json:"user_id"`
 	}
 
 	req := createChirpRequest{}
@@ -39,7 +39,8 @@ func (apiCfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Reques
 		helper.ResponseBadRequest(w, err.Error())
 		return
 	}
-	userID, err := uuid.Parse(req.UserID)
+	
+	userID, err := auth.GetUserIDFromContext(r.Context())
 	if err != nil {
 		helper.ResponseBadRequest(w, "Invalid user ID")
 		return
