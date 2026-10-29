@@ -84,6 +84,7 @@ func (apiCfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt.String(),
 			UpdatedAt: user.UpdatedAt.String(),
+			IsChirpyRed: user.IsChirpyRed,
 		},
 	})
 }

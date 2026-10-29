@@ -17,6 +17,7 @@ type User struct {
 	Email     string `json:"email"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+	IsChirpyRed bool `json:"is_chirpy_red"`
 }
 
 
@@ -72,6 +73,7 @@ func (apiCfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request
         Email:     insertedUser.Email,
         CreatedAt: insertedUser.CreatedAt.String(),
         UpdatedAt: insertedUser.UpdatedAt.String(),
+        IsChirpyRed: insertedUser.IsChirpyRed,
     })
 }
 
@@ -143,5 +145,6 @@ func (apiCfg *apiConfig) handleUserUpdate(w http.ResponseWriter, r *http.Request
 		Email:     updatedUser.Email,
 		CreatedAt: updatedUser.CreatedAt.String(),
 		UpdatedAt: updatedUser.UpdatedAt.String(),
+		IsChirpyRed: updatedUser.IsChirpyRed,
 	})
 }

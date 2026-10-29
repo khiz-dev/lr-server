@@ -129,6 +129,10 @@ func getEndpoints(apiCfg *apiConfig) Endpoints {
 				Pattern: "GET /api/chirps/{chirpID}",
 				Handler: apiCfg.handleGetChirpByID,
 			},
+			{
+				Pattern: "POST /api/polka/webhooks",
+				Handler: apiCfg.handleWebhook,
+			},
 		},
 	}
 }
