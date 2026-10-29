@@ -70,21 +70,33 @@ func (apiCfg *apiConfig) handleGetAllChrips(w http.ResponseWriter, r *http.Reque
 		helper.ResponseBadRequest(w, "Invalid author ID")
 		return
 	}
+
+	sortParam := r.URL.Query().Get("sort")
+	if sortParam != "asc" && sortParam != "desc" {
+		helper.ResponseBadRequest(w, "Invalid sort parameter")
+		return
+	}
+	if sortParam == "asc" {
+		sortParam = "asc"
+	} else if sortParam == "desc" {
+		sortParam = "desc"
+	}
+
 	
 	var chrips []database.Chrip
-	if err == nil && authorIDParam != "" {
-		chrips, err = apiCfg.db.GetChripsByUserID(context.Background(), authorID)
-		if err != nil {
-			helper.ResponseInternalServerError(w, err.Error())
-			return
-		}
-	} else {
+	switch [2]string{authorIDParam, sortParam} {
+	case [2]string{"", "asc"}:
+		chrips, err = apiCfg.db.GetAllChirpsAsc(context.Background())
+	case [2]string{"", "desc"}:
+		chrips, err = apiCfg.db.GetAllChirpsDesc(context.Background())
+	case [2]string{"author_id", "asc"}:
+		chrips, err = apiCfg.db.GetChripsByUserIDAsc(context.Background(), authorID)
+	case [2]string{"author_id", "desc"}:
+		chrips, err = apiCfg.db.GetChripsByUserIDDesc(context.Background(), authorID)
+	default:
 		chrips, err = apiCfg.db.GetAllChrips(context.Background())
-		if err != nil {
-			helper.ResponseInternalServerError(w, err.Error())
-			return
-		}
 	}
+
 	resp := make([]Chirp, len(chrips))
 	for i, c := range chrips {
 		resp[i] = Chirp{
