@@ -64,11 +64,26 @@ func (apiCfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Reques
 }
 
 func (apiCfg *apiConfig) handleGetAllChrips(w http.ResponseWriter, r *http.Request) {
-	chrips, err := apiCfg.db.GetAllChrips(context.Background())
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		helper.ResponseInternalServerError(w, err.Error())
+	authorIDParam	 := r.URL.Query().Get("author_id")
+	authorID, err := uuid.Parse(authorIDParam)
+	if authorIDParam != "" && err != nil {
+		helper.ResponseBadRequest(w, "Invalid author ID")
 		return
+	}
+	
+	var chrips []database.Chrip
+	if err == nil && authorIDParam != "" {
+		chrips, err = apiCfg.db.GetChripsByUserID(context.Background(), authorID)
+		if err != nil {
+			helper.ResponseInternalServerError(w, err.Error())
+			return
+		}
+	} else {
+		chrips, err = apiCfg.db.GetAllChrips(context.Background())
+		if err != nil {
+			helper.ResponseInternalServerError(w, err.Error())
+			return
+		}
 	}
 	resp := make([]Chirp, len(chrips))
 	for i, c := range chrips {
