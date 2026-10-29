@@ -25,6 +25,7 @@ type apiConfig struct {
 	FileserverHits atomic.Int32
 	db             *database.Queries
 	secret         string
+	polkaKey       string
 }
 
 func getServerConfig(port int) (*cfg, *apiConfig) {
@@ -34,6 +35,7 @@ func getServerConfig(port int) (*cfg, *apiConfig) {
 		FileserverHits: atomic.Int32{},
 		db: nil,
 		secret: os.Getenv("SECRET"),
+		polkaKey: os.Getenv("POLKA_KEY"),
 	}
 
 	cfg := &cfg{

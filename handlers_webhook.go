@@ -2,14 +2,27 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/khiz-dev/goserve/internal/auth"
 	"github.com/khiz-dev/goserve/internal/helper"
 )
 
 func (apiCfg *apiConfig) handleWebhook(w http.ResponseWriter, r *http.Request) {
-	// Implement webhook handling logic here
+	ApiKey, err := auth.GetAPIKey(r.Header)
+	fmt.Println("Retrieved API key:", ApiKey)
+	if err != nil {
+		fmt.Println("Error getting API key:", err)
+		helper.ResponseUnauthorized(w, err.Error())
+		return
+	}
+	if ApiKey != apiCfg.polkaKey {
+		helper.ResponseUnauthorized(w, "Invalid API key")
+		return
+	}
+
 	type webhookPayload struct {
 		Event string `json:"event"`
 		Data  struct {
@@ -18,7 +31,7 @@ func (apiCfg *apiConfig) handleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var v webhookPayload
-	err := json.NewDecoder(r.Body).Decode(&v)
+	err = json.NewDecoder(r.Body).Decode(&v)
 	if err != nil {
 		helper.ResponseBadRequest(w, "Invalid request payload")
 		return
