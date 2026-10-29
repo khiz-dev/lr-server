@@ -142,3 +142,43 @@ func chirpHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
+
+func (apiCfg *apiConfig) handleDeleteChirp(w http.ResponseWriter, r *http.Request) {
+	chirpID := r.PathValue("chirpID")
+	id, err := uuid.Parse(chirpID)
+	if err != nil {
+		helper.ResponseBadRequest(w, err.Error())
+		return
+	}
+
+	userID, err := auth.GetUserIDFromContext(r.Context())
+	if err != nil {
+		helper.ResponseUnauthorized(w, "Unauthorized")
+		return
+	}
+
+	chirp, err := apiCfg.db.GetChirpByID(context.Background(), id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		helper.ResponseNotFound(w, "Chirp not found")
+		return
+	}
+	if err != nil {
+		helper.ResponseInternalServerError(w, err.Error())
+		return
+	}
+	if chirp.UserID != userID {
+		helper.ResponseNoPermission(w, "No permission to delete this chirp")
+		return
+	}
+
+	err = apiCfg.db.DeleteChirp(context.Background(), id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		helper.ResponseNotFound(w, "Chirp not found")
+		return
+	}
+	if err != nil {
+		helper.ResponseInternalServerError(w, err.Error())
+		return
+	}
+	helper.ResponseNoContent(w)
+}

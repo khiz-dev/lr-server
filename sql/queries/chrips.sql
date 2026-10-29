@@ -14,3 +14,6 @@ SELECT * FROM chrips WHERE id = $1;
 
 -- name: GetChripsByUserID :many
 SELECT * FROM chrips WHERE user_id = $1 ORDER BY created_at ASC;
+
+-- name: DeleteChirp :exec
+DELETE FROM chrips WHERE id = $1;

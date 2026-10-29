@@ -90,6 +90,10 @@ func getEndpoints(apiCfg *apiConfig) Endpoints {
 				Pattern: "PUT /api/users",
 				Handler: apiCfg.handleUserUpdate,
 			},
+			{
+				Pattern: "DELETE /api/chirps/{chirpID}",
+				Handler: apiCfg.handleDeleteChirp,
+			},
 		},
 
 		Public: []Endpoint{

@@ -47,6 +47,15 @@ func ResponseUnauthorized(w http.ResponseWriter, payload any) {
 	json.NewEncoder(w).Encode(unauthorizedResponse{Error: payload.(string)})
 }
 
+func ResponseNoPermission(w http.ResponseWriter, payload any) {
+	type noPermissionResponse struct {
+		Error string `json:"error"`
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusForbidden)
+	json.NewEncoder(w).Encode(noPermissionResponse{Error: payload.(string)})
+}
+
 func ResponseBadRequest(w http.ResponseWriter, payload any) {
 	type badResponse struct {
 		Error string `json:"error"`
